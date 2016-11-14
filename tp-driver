@@ -124,7 +124,7 @@ INTEGER		tech_pwd_hold_flag, page_val[8], temp_page_val[8];
 // LONG_INTEGER
 // SIGNED_INTEGER
 // SIGNED_LONG_INTEGER
-STRING		pwd_string[10], pwd_string_hidden[10];
+STRING		pwd_string[10], pwd_string_hidden[10], pwd_correct[4];
 
 /*******************************************************************************************
   Functions
@@ -216,7 +216,18 @@ Function PasswordBackspace()
 
 Function PasswordSubmit()
 {
-	//PageRefresh(1);
+	if(pwd_string != "1234")
+	{
+    	pwd_string = "";
+		pwd_tech = pwd_string;
+	}
+
+	if(pwd_string = pwd_correct)
+	{
+    	pwd_string = "";
+		pwd_tech = pwd_string;
+		sub_tech_pwd = 0;
+	}
 }
 
 
@@ -563,6 +574,8 @@ Function Main()
 	source_1_mode = 0;
 	source_2_mode = 0;
 	source_3_mode = 0;
+
+	pwd_correct = "1234";
 
 //	while(1)
 //	{
