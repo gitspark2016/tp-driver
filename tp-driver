@@ -193,7 +193,7 @@ Function PasswordDigit(integer digit)
 {
 	if(len(pwd_string) < 8)
 	{
-			pwd_string = pwd_string + chr(digit);
+			pwd_string = pwd_string + itoa(digit);
 			pwd_string_hidden = pwd_string_hidden + "*";
 
 			if(pwd_hide != 1)
