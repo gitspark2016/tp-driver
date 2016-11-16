@@ -267,20 +267,26 @@ String_Function MyStrFunction1()
 //Press and hold to access tech page
 PUSH press_tech
 {
-	tech_pwd_hold_flag = 1;
-	delay(100);
-	if(tech_pwd_hold_flag = 1)
+	if(page_welcome = 1)
 	{
-		sub_tech_pwd = 1;
-    	tech_pwd_hold_flag = 0;
+		tech_pwd_hold_flag = 1;
+		delay(100);
+		if(tech_pwd_hold_flag = 1)
+		{
+			sub_tech_pwd = 1;
+	    	tech_pwd_hold_flag = 0;
+		}
 	}
 }
 
 RELEASE press_tech
 {
-	if(tech_pwd_hold_flag = 1)
+	if(page_welcome = 1)
 	{
-    	tech_pwd_hold_flag = 0;
+		if(tech_pwd_hold_flag = 1)
+		{
+	    	tech_pwd_hold_flag = 0;
+		}
 	}
 }
 /*===========================================================================*/
@@ -445,6 +451,18 @@ PUSH source_3_right
 
 /*************************************************************/
 // BEGIN TECHNICIAN PASSWORD REQUIREMENT
+PUSH pwd_mask
+{
+	if(pwd_mask_fb = 0)
+	{
+    	pwd_mask_fb = 1;
+	}
+	else
+	{
+    	pwd_mask_fb = 0;
+	}
+}
+
 PUSH pwd_exit
 {
 	sub_tech_pwd = 0;
@@ -576,6 +594,8 @@ Function Main()
 	source_3_mode = 0;
 
 	pwd_correct = "1234";
+
+	PageRefresh(0);	//Sets the page to the welcome screen by default
 
 //	while(1)
 //	{
