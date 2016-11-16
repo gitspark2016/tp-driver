@@ -196,7 +196,7 @@ Function PasswordDigit(integer digit)
 			pwd_string = pwd_string + itoa(digit);
 			pwd_string_hidden = pwd_string_hidden + "*";
 
-			if(pwd_hide != 1)
+			if(pwd_mask_fb != 1)
 				pwd_tech = pwd_string;
 			else
                	pwd_tech = pwd_string_hidden;
@@ -208,7 +208,7 @@ Function PasswordBackspace()
 	pwd_string = left(pwd_string, len(pwd_string) - 1);
 	pwd_string_hidden = left(pwd_string_hidden, len(pwd_string_hidden) - 1);
 
-	if(pwd_hide != 1)
+	if(pwd_mask_fb != 1)
 		pwd_tech = pwd_string;
 	else
 		pwd_tech = pwd_string_hidden;
@@ -219,12 +219,14 @@ Function PasswordSubmit()
 	if(pwd_string != "1234")
 	{
     	pwd_string = "";
+		pwd_string_hidden = "";
 		pwd_tech = pwd_string;
 	}
 
 	if(pwd_string = pwd_correct)
 	{
     	pwd_string = "";
+		pwd_string_hidden = "";
 		pwd_tech = pwd_string;
 		sub_tech_pwd = 0;
 	}
@@ -456,10 +458,14 @@ PUSH pwd_mask
 	if(pwd_mask_fb = 0)
 	{
     	pwd_mask_fb = 1;
+		pwd_tech = pwd_string_hidden;
+
 	}
 	else
 	{
     	pwd_mask_fb = 0;
+		pwd_tech = pwd_string;
+
 	}
 }
 
@@ -586,9 +592,6 @@ SOCKETSTATUS
 
 Function Main()
 {
-    // TODO:  Add code here
-    // Initialize declared global and local variables/arrays as needed.
-
 	source_1_mode = 0;
 	source_2_mode = 0;
 	source_3_mode = 0;
