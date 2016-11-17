@@ -189,50 +189,6 @@ Function PageRefresh(integer page_index)
 		SettingsRefresh();
 }
 
-Function PasswordDigit(integer digit)
-{
-	if(len(pwd_string) < 8)
-	{
-			pwd_string = pwd_string + itoa(digit);
-			pwd_string_hidden = pwd_string_hidden + "*";
-
-			if(pwd_mask_fb != 1)
-				pwd_tech = pwd_string;
-			else
-               	pwd_tech = pwd_string_hidden;
-	}
-}
-
-Function PasswordBackspace()
-{
-	pwd_string = left(pwd_string, len(pwd_string) - 1);
-	pwd_string_hidden = left(pwd_string_hidden, len(pwd_string_hidden) - 1);
-
-	if(pwd_mask_fb != 1)
-		pwd_tech = pwd_string;
-	else
-		pwd_tech = pwd_string_hidden;
-}
-
-Function PasswordSubmit()
-{
-	if(pwd_string != "1234")
-	{
-    	pwd_string = "";
-		pwd_string_hidden = "";
-		pwd_tech = pwd_string;
-	}
-
-	if(pwd_string = pwd_correct)
-	{
-    	pwd_string = "";
-		pwd_string_hidden = "";
-		pwd_tech = pwd_string;
-		sub_tech_pwd = 0;
-	}
-}
-
-
 Function SystemShutdown()
 {
 	print("System Shutting Down");
@@ -453,6 +409,20 @@ PUSH source_3_right
 
 /*************************************************************/
 // BEGIN TECHNICIAN PASSWORD REQUIREMENT
+Function PasswordDigit(integer digit)
+{
+	if(len(pwd_string) < 8)
+	{
+			pwd_string = pwd_string + itoa(digit);
+			pwd_string_hidden = pwd_string_hidden + "*";
+
+			if(pwd_mask_fb != 1)
+				pwd_tech = pwd_string;
+			else
+               	pwd_tech = pwd_string_hidden;
+	}
+}
+
 PUSH pwd_mask
 {
 	if(pwd_mask_fb = 0)
@@ -467,6 +437,13 @@ PUSH pwd_mask
 		pwd_tech = pwd_string;
 
 	}
+}
+
+PUSH pwd_clear
+{
+	pwd_string = "";
+	pwd_string_hidden = "";
+	pwd_tech = pwd_string;
 }
 
 PUSH pwd_exit
@@ -526,13 +503,36 @@ PUSH pwd_9
 
 PUSH pwd_backspace
 {
-	PasswordBackspace();
+	pwd_string = left(pwd_string, len(pwd_string) - 1);
+	pwd_string_hidden = left(pwd_string_hidden, len(pwd_string_hidden) - 1);
+
+	if(pwd_mask_fb != 1)
+		pwd_tech = pwd_string;
+	else
+		pwd_tech = pwd_string_hidden;
 }
 
 Push pwd_submit
 {
-	PasswordSubmit();
+	if(pwd_string != "1234")
+	{
+    	pwd_string = "";
+		pwd_string_hidden = "";
+		pwd_tech = pwd_string;
+	}
+
+	if(pwd_string = pwd_correct)
+	{
+		PageRefresh(1);
+    	pwd_string = "";
+		pwd_string_hidden = "";
+		pwd_tech = pwd_string;
+		sub_tech_pwd = 0;
+	}
 }
+/*************************************************************/
+// END TECHNICIAN PASSWORD CODE
+/*************************************************************/
 
 
 
