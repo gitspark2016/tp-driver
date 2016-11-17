@@ -124,7 +124,7 @@ INTEGER		tech_pwd_hold_flag, page_val[8], temp_page_val[8];
 // LONG_INTEGER
 // SIGNED_INTEGER
 // SIGNED_LONG_INTEGER
-STRING		pwd_string[10], pwd_string_hidden[10];
+STRING		pwd_string[10], pwd_string_hidden[10], pwd_correct[4];
 
 /*******************************************************************************************
   Functions
@@ -189,37 +189,6 @@ Function PageRefresh(integer page_index)
 		SettingsRefresh();
 }
 
-Function PasswordDigit(integer digit)
-{
-	if(len(pwd_string) < 8)
-	{
-			pwd_string = pwd_string + chr(digit);
-			pwd_string_hidden = pwd_string_hidden + "*";
-
-			if(pwd_hide != 1)
-				pwd_tech = pwd_string;
-			else
-               	pwd_tech = pwd_string_hidden;
-	}
-}
-
-Function PasswordBackspace()
-{
-	pwd_string = left(pwd_string, len(pwd_string) - 1);
-	pwd_string_hidden = left(pwd_string_hidden, len(pwd_string_hidden) - 1);
-
-	if(pwd_hide != 1)
-		pwd_tech = pwd_string;
-	else
-		pwd_tech = pwd_string_hidden;
-}
-
-Function PasswordSubmit()
-{
-	//PageRefresh(1);
-}
-
-
 Function SystemShutdown()
 {
 	print("System Shutting Down");
@@ -256,20 +225,26 @@ String_Function MyStrFunction1()
 //Press and hold to access tech page
 PUSH press_tech
 {
-	tech_pwd_hold_flag = 1;
-	delay(100);
-	if(tech_pwd_hold_flag = 1)
+	if(page_welcome = 1)
 	{
-		sub_tech_pwd = 1;
-    	tech_pwd_hold_flag = 0;
+		tech_pwd_hold_flag = 1;
+		delay(100);
+		if(tech_pwd_hold_flag = 1)
+		{
+			sub_tech_pwd = 1;
+	    	tech_pwd_hold_flag = 0;
+		}
 	}
 }
 
 RELEASE press_tech
 {
-	if(tech_pwd_hold_flag = 1)
+	if(page_welcome = 1)
 	{
-    	tech_pwd_hold_flag = 0;
+		if(tech_pwd_hold_flag = 1)
+		{
+	    	tech_pwd_hold_flag = 0;
+		}
 	}
 }
 /*===========================================================================*/
@@ -434,6 +409,43 @@ PUSH source_3_right
 
 /*************************************************************/
 // BEGIN TECHNICIAN PASSWORD REQUIREMENT
+Function PasswordDigit(integer digit)
+{
+	if(len(pwd_string) < 8)
+	{
+			pwd_string = pwd_string + itoa(digit);
+			pwd_string_hidden = pwd_string_hidden + "*";
+
+			if(pwd_mask_fb != 1)
+				pwd_tech = pwd_string;
+			else
+               	pwd_tech = pwd_string_hidden;
+	}
+}
+
+PUSH pwd_mask
+{
+	if(pwd_mask_fb = 0)
+	{
+    	pwd_mask_fb = 1;
+		pwd_tech = pwd_string_hidden;
+
+	}
+	else
+	{
+    	pwd_mask_fb = 0;
+		pwd_tech = pwd_string;
+
+	}
+}
+
+PUSH pwd_clear
+{
+	pwd_string = "";
+	pwd_string_hidden = "";
+	pwd_tech = pwd_string;
+}
+
 PUSH pwd_exit
 {
 	sub_tech_pwd = 0;
@@ -491,13 +503,36 @@ PUSH pwd_9
 
 PUSH pwd_backspace
 {
-	PasswordBackspace();
+	pwd_string = left(pwd_string, len(pwd_string) - 1);
+	pwd_string_hidden = left(pwd_string_hidden, len(pwd_string_hidden) - 1);
+
+	if(pwd_mask_fb != 1)
+		pwd_tech = pwd_string;
+	else
+		pwd_tech = pwd_string_hidden;
 }
 
 Push pwd_submit
 {
-	PasswordSubmit();
+	if(pwd_string != "1234")
+	{
+    	pwd_string = "";
+		pwd_string_hidden = "";
+		pwd_tech = pwd_string;
+	}
+
+	if(pwd_string = pwd_correct)
+	{
+		PageRefresh(1);
+    	pwd_string = "";
+		pwd_string_hidden = "";
+		pwd_tech = pwd_string;
+		sub_tech_pwd = 0;
+	}
 }
+/*************************************************************/
+// END TECHNICIAN PASSWORD CODE
+/*************************************************************/
 
 
 
@@ -557,12 +592,13 @@ SOCKETSTATUS
 
 Function Main()
 {
-    // TODO:  Add code here
-    // Initialize declared global and local variables/arrays as needed.
-
 	source_1_mode = 0;
 	source_2_mode = 0;
 	source_3_mode = 0;
+
+	pwd_correct = "1234";
+
+	PageRefresh(0);	//Sets the page to the welcome screen by default
 
 //	while(1)
 //	{
