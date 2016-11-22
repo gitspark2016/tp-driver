@@ -50,20 +50,24 @@ Comments:
   (Uncomment and declare inputs and outputs as needed)
 *******************************************************************************************/
 //===========================================================================================================================
-digital_input		press_tech, press_welcome, _skip_, _skip_, press_settings_1, press_settings_2, press_settings_3,
-					press_settings_exit, _skip_, pwd_hide, pwd_0, pwd_1, pwd_2, pwd_3, pwd_4, pwd_5, pwd_6, pwd_7,
-					pwd_8, pwd_9, pwd_backspace, pwd_submit, pwd_exit, _skip_, source_1_left, source_1_right, source_2_left,
-					source_2_right, source_3_left, source_3_right, _skip_, shutdown_yes, shutdown_no, _skip_;
+digital_input		press_tech, press_welcome, press_present, press_ac, _skip_, _skip_, _skip_, _skip_, press_settings_1,
+					press_settings_2, press_settings_3, press_settings_exit, _skip_, _skip_, _skip_, pwd_clear, pwd_mask,
+					pwd_0, pwd_1, pwd_2, pwd_3, pwd_4, pwd_5, pwd_6, pwd_7, pwd_8, pwd_9, pwd_backspace, pwd_submit, pwd_exit,
+					_skip_, source_1_left, source_1_right, source_2_left, source_2_right, source_3_left, source_3_right, _skip_,
+					tech_home_present, tech_home_ac, _skip_, shutdown_yes, shutdown_no, _skip_;
 
-digital_output		page_welcome, page_tech, page_present, _skip_, sub_tech_pwd, sub_settings_even, sub_settings_odd,
-					sub_settings_volume, sub_confirm_shutdown, _skip_, _skip_, _skip_, _skip_, _skip_, _skip_, _skip_,
-					_skip_, _skip_, _skip_, _skip_, _skip_, _skip_, _skip_, _skip_, _skip_, _skip_, _skip_, _skip_,
-					_skip_, _skip_, _skip_, _skip_, _skip_, _skip_;
+digital_output		page_welcome, page_tech, page_home, page_present, page_ac, _skip_, sub_home_even, sub_home_odd, sub_tech_pwd,
+					sub_settings_even, sub_settings_odd, sub_settings_volume, sub_startup, sub_confirm_shutdown, _skip_,
+					_skip_, pwd_mask_fb,_skip_, _skip_, _skip_, _skip_, _skip_,_skip_, _skip_, _skip_, _skip_, _skip_, _skip_,
+					_skip_, _skip_, _skip_, _skip_, _skip_, _skip_, _skip_, _skip_, _skip_, _skip_, tech_home_present_fb,
+					tech_home_ac_fb, sub_tech_home, sub_tech_sources, _skip_, _skip_, _skip_,
+					_skip_, _skip_, _skip_;
 //===========================================================================================================================
 analog_input		pwd_attempts, settings_1_mode_fb, settings_2_mode_fb, settings_3_mode_fb;
-analog_output		settings_1_mode, settings_2_mode, settings_3_mode, source_1_mode, source_2_mode, source_3_mode, _skip_;
+analog_output		settings_1_mode, settings_2_mode, settings_3_mode, source_1_mode, source_2_mode, source_3_mode, home_1_mode,
+					home_2_mode, home_3_mode, _skip_;
 //===========================================================================================================================
-string_output		pwd_tech, prompt_welcome;
+string_output		pwd_tech, prompt_welcome, prompt_startup;
 //===========================================================================================================================
 /*******************************************************************************************
   SOCKETS
@@ -120,37 +124,66 @@ MyStruct1 struct;
   Note:  Be sure to initialize all declared STRING variables as needed
          For example, in Function Main: myString = "";
 *******************************************************************************************/
-INTEGER		tech_pwd_hold_flag, page_val[8], temp_page_val[8];
+INTEGER		tech_pwd_hold_flag, tech_present_hold_flag, tech_ac_hold_flag, page_val[8], temp_page_val[8],
+			busy_flag, system_status, tech_page_val[4];
 // LONG_INTEGER
 // SIGNED_INTEGER
 // SIGNED_LONG_INTEGER
 STRING		pwd_string[10], pwd_string_hidden[10], pwd_correct[4];
 
-/*******************************************************************************************
-  Functions
-  (Add any additional functions here)
-  Note:  Functions must be physically placed before the location in
-         the code that calls them.
-*******************************************************************************************/
+
+/*************************************************************/
+// BEGIN SETTINGS BAR AND PAGE NAVIGATION CODE
+/*************************************************************/
+
 Function SettingsRefresh()
 {
+		// Even
+		// 1
+		// 2
+
+		// Odd
+		// 3
+		// 1
+		// 2
+
+		// Mode
+		// 0 - Blank
+		// 1 - Home
+		// 2 - Power
+		// 3 - Audio
+		// 4 - Camera
+
+		// Welcome Page Settings
 		if(page_val[0] = 1)
 		{
         	sub_settings_even = 0;
-			sub_settings_odd = 1;
-
-        	settings_1_mode = 0;
-			settings_2_mode = 4;
-			settings_3_mode = 4;
+			sub_settings_odd = 0;
 		}
+
+		// Technician Page Settings
 		else if(page_val[1] = 1)
 		{
         	sub_settings_even = 1;
 			sub_settings_odd = 0;
 
 			settings_1_mode = 1;
-			settings_2_mode = 0;
+			settings_2_mode = 2;
 		}
+
+		// Home Page Settings
+		else if(page_val[2] = 1)
+        {
+        	sub_settings_even = 0;
+			sub_settings_odd = 1;
+
+			settings_1_mode = 2;
+			settings_2_mode = 0;
+			settings_3_mode = 0;
+
+		}
+
+		// Presentation Page Settings
 		else if(page_val[3] = 1)
         {
         	sub_settings_even = 0;
@@ -158,19 +191,17 @@ Function SettingsRefresh()
 
 			settings_1_mode = 1;
 			settings_2_mode = 2;
-			settings_3_mode = 0;
+			settings_3_mode = 3;
 
 		}
-		else
-		{
-        	sub_settings_odd = 0;
-			sub_settings_even = 0;
-		}
-
 }
 
 Function PageRefresh(integer page_index)
 {
+		// 0 - Welcome
+		// 1 - Tech
+		// 2 - Home
+		// 3 - Presentation
 		integer i;
 
 		page_val[page_index] = 1;
@@ -184,14 +215,107 @@ Function PageRefresh(integer page_index)
 
 		page_welcome = page_val[0];
 		page_tech = page_val[1];
+		page_home = page_val[2];
 		page_present = page_val[3];
 
 		SettingsRefresh();
 }
 
+Function SystemStartup(integer page_index)
+{
+	sub_startup = 1;
+	prompt_startup = "Please wait while the system starts up";
+	delay(300);
+	sub_startup = 0;
+	PageRefresh(page_index);
+	prompt_startup = "";
+	system_status = 1;
+
+}
+
+PUSH press_welcome
+{
+	if(busy_flag != 1)
+	{
+		PageRefresh(2);
+	}
+}
+
+PUSH press_present
+{
+	if(system_status = 0)
+	{
+    	SystemStartup(3);
+	}
+	else
+	{
+		PageRefresh(3);
+	}
+}
+
+// 0 - Welcome
+// 1 - Tech
+// 2 - Home
+// 3 - Presentation
+PUSH press_settings_1
+{
+	if(settings_1_mode_fb = 1)
+	{
+		PageRefresh(2);
+	}
+	else if(settings_1_mode_fb = 2)
+	{
+		sub_confirm_shutdown = 1;
+	}
+}
+
+PUSH press_settings_2
+{
+	if(settings_2_mode_fb = 1)
+	{
+		PageRefresh(2);
+	}
+	else if(settings_2_mode_fb = 2)
+	{
+    	sub_confirm_shutdown = 1;
+	}
+	else if(settings_2_mode_fb = 3)
+	{
+    	sub_settings_volume = 1;
+	}
+}
+
+PUSH press_settings_3
+{
+	if(settings_3_mode_fb = 1)
+	{
+    	PageRefresh(2);
+	}
+	else if(settings_3_mode_fb = 2)
+	{
+		sub_confirm_shutdown = 1;
+	}
+	else if(settings_3_mode_fb = 3)
+	{
+    	sub_settings_volume = 1;
+	}
+}
+
+PUSH press_settings_exit
+{
+	sub_settings_volume = 0;
+}
+
+
+
 Function SystemShutdown()
 {
-	print("System Shutting Down");
+	busy_flag = 1;
+	prompt_welcome = "please wait while system shuts down.";
+	delay(300);
+	system_status = 0;
+	prompt_welcome = "touch screen to begin";
+	busy_flag = 0;
 }
 
 /*
@@ -247,68 +371,7 @@ RELEASE press_tech
 		}
 	}
 }
-/*===========================================================================*/
-//Navigate to the presentation page
-PUSH press_welcome
-{
-	PageRefresh(3);
-}
-/*************************************************************/
 
-
-
-
-/*************************************************************/
-//Control of the Settings Menu
-PUSH press_settings_1
-{
-	if(settings_1_mode_fb = 0)
-	{
-		sub_confirm_shutdown = 1;
-	}
-	else if(settings_1_mode_fb = 1)
-	{
-    	PageRefresh(0);
-	}
-}
-
-PUSH press_settings_2
-{
-	if(settings_2_mode_fb = 0)
-	{
-    	sub_confirm_shutdown = 1;
-	}
-	else if(settings_2_mode_fb = 1)
-	{
-    	PageRefresh(0);
-	}
-	else if(settings_2_mode_fb = 2)
-	{
-    	sub_settings_volume = 1;
-	}
-}
-
-PUSH press_settings_3
-{
-	if(settings_3_mode_fb = 0)
-	{
-    	sub_confirm_shutdown = 1;
-	}
-	else if(settings_3_mode_fb = 1)
-	{
-    	PageRefresh(0);
-	}
-	else if(settings_3_mode_fb = 2)
-	{
-    	sub_settings_volume = 1;
-	}
-}
-
-PUSH press_settings_exit
-{
-	sub_settings_volume = 0;
-}
-/*************************************************************/
 
 PUSH shutdown_yes
 {
@@ -336,7 +399,6 @@ PUSH source_1_left
 	{
     	source_1_mode = source_1_mode - 1;
 	}
-
 }
 
 PUSH source_1_right
@@ -349,7 +411,6 @@ PUSH source_1_right
 	{
     	source_1_mode = source_1_mode + 1;
 	}
-
 }
 
 PUSH source_2_left
@@ -362,7 +423,6 @@ PUSH source_2_left
 	{
     	source_2_mode = source_2_mode - 1;
 	}
-
 }
 
 PUSH source_2_right
@@ -375,7 +435,6 @@ PUSH source_2_right
 	{
     	source_2_mode = source_2_mode + 1;
 	}
-
 }
 
 PUSH source_3_left
@@ -388,7 +447,6 @@ PUSH source_3_left
 	{
     	source_3_mode = source_3_mode - 1;
 	}
-
 }
 
 PUSH source_3_right
@@ -401,14 +459,19 @@ PUSH source_3_right
 	{
     	source_3_mode = source_3_mode + 1;
 	}
-
 }
 
 // END TECHNICIAN SOURCE SELECT LOGIC
 /*************************************************************/
 
+
+
+
+
+
 /*************************************************************/
-// BEGIN TECHNICIAN PASSWORD REQUIREMENT
+// BEGIN TECHNICIAN PASSWORD CODE
+/*************************************************************/
 Function PasswordDigit(integer digit)
 {
 	if(len(pwd_string) < 8)
@@ -429,13 +492,11 @@ PUSH pwd_mask
 	{
     	pwd_mask_fb = 1;
 		pwd_tech = pwd_string_hidden;
-
 	}
 	else
 	{
     	pwd_mask_fb = 0;
 		pwd_tech = pwd_string;
-
 	}
 }
 
@@ -535,7 +596,50 @@ Push pwd_submit
 /*************************************************************/
 
 
+/*************************************************************/
+// BEGIN TECHNICIAN MENU SETUP
+/*************************************************************/
 
+PUSH tech_home_present
+{
+	tech_present_hold_flag = 0;
+
+	if(tech_home_present_fb = 0)
+	{
+    	delay(100);
+		tech_present_hold_flag = 1;
+	}
+
+	if(tech_home_present_fb = 1)
+	{
+		delay(200);
+		tech_present_hold_flag = 1;
+	}
+}
+
+RELEASE tech_home_present
+{
+	if(tech_home_present_fb = 0 && tech_present_hold_flag = 0)
+	{
+    	tech_home_present_fb = 1;
+	}
+
+	else if(tech_home_present_fb = 1 && tech_present_hold_flag = 0)
+	{
+    	tech_home_present_fb = 0;
+	}
+
+	else if(tech_home_present_fb = 1 && tech_present_hold_flag = 1)
+	{
+		sub_tech_sources = 1;
+	}
+
+}
+
+
+/*************************************************************/
+// END TECHNICIAN MENU SETUP
+/*************************************************************/
 
 
 
@@ -595,6 +699,7 @@ Function Main()
 	source_1_mode = 0;
 	source_2_mode = 0;
 	source_3_mode = 0;
+	system_status = 0;
 
 	pwd_correct = "1234";
 
