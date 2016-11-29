@@ -3,10 +3,10 @@
   (Fill in comments below)
 *******************************************************************************************/
 /*
-Dealer Name:
-System Name:
-System Number:
-Programmer:
+Dealer Name: sparkAV
+System Name: base code
+System Number: 1
+Programmer: Erik
 Comments:
 */
 
@@ -17,26 +17,20 @@ Comments:
 // #ENABLE_DYNAMIC
 #SYMBOL_NAME "touch panel driver"
 // #HINT ""
-// #DEFINE_CONSTANT
-// #CATEGORY ""
-#CATEGORY "12" // System Control
+#CATEGORY "12"
 #PRINT_TO_TRACE
-// #DIGITAL_EXPAND
-// #ANALOG_SERIAL_EXPAND
-// #OUTPUT_SHIFT
 // #HELP_PDF_FILE ""
 #DEFAULT_VOLATILE
 #ENABLE_STACK_CHECKING
 #ENABLE_TRACE
-// #ENCODING_ASCII
-// #ENCODING_UTF16
-// #ENCODING_INHERIT_FROM_PARENT
-// #ENCODING_INHERIT_FROM_PROGRAM
+
+
 #define_constant _page_welcome					00
 #define_constant _page_tech						01
 #define_constant _page_home						02
 #define_constant _page_present					03
 #define_constant _page_ac						04
+#define_constant _page_vc						05
 
 #define_constant _icon_setting_blank			00
 #define_constant _icon_setting_home				01
@@ -47,6 +41,8 @@ Comments:
 #define_constant _icon_home_blank				00
 #define_constant _icon_home_present				01
 #define_constant _icon_home_ac					02
+#define_constant _icon_home_vc					03
+
 
 #HELP_BEGIN
 	Touch Panel Driver for SparkAV Standard Touch Panel.
@@ -65,18 +61,19 @@ Comments:
   (Uncomment and declare inputs and outputs as needed)
 *******************************************************************************************/
 //===========================================================================================================================
-digital_input		press_tech, press_welcome, press_home_menu_1, press_home_menu_2, _skip_, _skip_, _skip_, _skip_, press_settings_1,
-					press_settings_2, press_settings_3, press_settings_exit, _skip_, _skip_, _skip_, pwd_clear, pwd_mask,
-					pwd_0, pwd_1, pwd_2, pwd_3, pwd_4, pwd_5, pwd_6, pwd_7, pwd_8, pwd_9, pwd_backspace, pwd_submit, pwd_exit,
-					_skip_, source_1_left, source_1_right, source_2_left, source_2_right, source_3_left, source_3_right, _skip_,
-					tech_settings_exit, tech_home_present, tech_home_ac, _skip_, shutdown_yes, shutdown_no, _skip_;
+digital_input		press_tech, press_welcome, press_home_menu_1, press_home_menu_2, press_home_menu_3, _skip_, _skip_, _skip_,
+					_skip_, press_settings_1, press_settings_2, press_settings_3, press_settings_exit, _skip_, _skip_, _skip_,
+					pwd_clear, pwd_mask, pwd_0, pwd_1, pwd_2, pwd_3, pwd_4, pwd_5, pwd_6, pwd_7, pwd_8, pwd_9, pwd_backspace,
+					pwd_submit, pwd_exit, _skip_, source_1_left, source_1_right, source_2_left, source_2_right, source_3_left,
+					source_3_right, _skip_, tech_settings_exit, tech_home_present, tech_home_ac, tech_home_vc, _skip_,
+					shutdown_yes, shutdown_no, _skip_;
 
-digital_output		page_welcome, page_tech, page_home, page_present, page_ac, _skip_, sub_home_even, sub_home_odd, sub_tech_pwd,
-					sub_settings_even, sub_settings_odd, sub_settings_volume, sub_startup, sub_confirm_shutdown, _skip_,
-					_skip_, pwd_mask_fb,_skip_, _skip_, _skip_, _skip_, _skip_,_skip_, _skip_, _skip_, _skip_, _skip_, _skip_,
-					_skip_, _skip_, _skip_, _skip_, _skip_, _skip_, _skip_, _skip_, _skip_, _skip_, tech_home_present_fb,
-					tech_home_ac_fb, sub_tech_home, sub_tech_sources, _skip_, _skip_, _skip_,
-					_skip_, _skip_, _skip_;
+digital_output		page_welcome, page_tech, page_home, page_present, page_ac, page_vc, _skip_, _skip_, sub_home_even,
+					sub_home_odd, sub_tech_pwd, sub_settings_even, sub_settings_odd, sub_settings_volume, sub_startup,
+					sub_confirm_shutdown, _skip_, _skip_, pwd_mask_fb,_skip_, _skip_, _skip_, _skip_, _skip_,_skip_, _skip_,
+					_skip_, _skip_, _skip_, _skip_, _skip_, _skip_, _skip_, _skip_, _skip_, _skip_, _skip_, _skip_, _skip_,
+					_skip_, tech_home_present_fb, tech_home_ac_fb, tech_home_vc_fb, sub_tech_home, sub_tech_sources, _skip_,
+					_skip_, _skip_, _skip_, _skip_, _skip_;
 //===========================================================================================================================
 analog_input		pwd_attempts, settings_1_mode_fb, settings_2_mode_fb, settings_3_mode_fb;
 analog_output		settings_1_mode, settings_2_mode, settings_3_mode, source_1_mode, source_2_mode, source_3_mode, home_1_mode,
@@ -139,7 +136,7 @@ MyStruct1 struct;
   Note:  Be sure to initialize all declared STRING variables as needed
          For example, in Function Main: myString = "";
 *******************************************************************************************/
-INTEGER		tech_pwd_hold_flag, tech_present_hold_flag, tech_ac_hold_flag, page_val[8], temp_page_val[8],
+INTEGER		tech_pwd_hold_flag, tech_present_hold_flag, tech_ac_hold_flag, tech_vc_hold_flag, page_val[8], temp_page_val[8],
 			busy_flag, system_status;
 // LONG_INTEGER
 // SIGNED_INTEGER
@@ -230,6 +227,7 @@ Function PageRefresh(integer page_index)
 		page_home = page_val[_page_home];
 		page_present = page_val[_page_present];
 		page_ac = page_val[_page_ac];
+		page_vc = page_val[_page_vc];
 
 		ClearSubs();
 		SettingsRefresh();
@@ -268,7 +266,7 @@ RELEASE press_home_menu_1
     		SystemStartup(_page_present);
 		}
 	}
-	if(home_1_mode = _icon_home_ac)
+	else if(home_1_mode = _icon_home_ac)
 	{
 		if(system_status)
 		{
@@ -277,6 +275,17 @@ RELEASE press_home_menu_1
 		else
 		{
 			SystemStartup(_page_ac);
+		}
+	}
+	else if(home_1_mode = _icon_home_vc)
+	{
+		if(system_status)
+		{
+	   		PageRefresh(_page_vc);
+		}
+		else
+		{
+			SystemStartup(_page_vc);
 		}
 	}
 }
@@ -294,7 +303,7 @@ RELEASE press_home_menu_2
 			SystemStartup(_page_present);
 		}
 	}
-	if(home_2_mode = _icon_home_ac)
+	else if(home_2_mode = _icon_home_ac)
 	{
 		if(system_status)
 		{
@@ -303,6 +312,55 @@ RELEASE press_home_menu_2
 		else
 		{
 			SystemStartup(_page_ac);
+		}
+	}
+	else if(home_2_mode = _icon_home_vc)
+	{
+		if(system_status)
+		{
+	   		PageRefresh(_page_vc);
+		}
+		else
+		{
+			SystemStartup(_page_vc);
+		}
+	}
+
+}
+
+RELEASE press_home_menu_3
+{
+	if(home_3_mode = _icon_home_present)
+	{
+		if(system_status)
+		{
+    		PageRefresh(_page_present);
+		}
+		else
+		{
+			SystemStartup(_page_present);
+		}
+	}
+	else if(home_3_mode = _icon_home_ac)
+	{
+		if(system_status)
+		{
+			PageRefresh(_page_ac);
+		}
+		else
+		{
+			SystemStartup(_page_ac);
+		}
+	}
+	else if(home_3_mode = _icon_home_vc)
+	{
+		if(system_status)
+		{
+	   		PageRefresh(_page_vc);
+		}
+		else
+		{
+			SystemStartup(_page_vc);
 		}
 	}
 }
@@ -664,7 +722,7 @@ FUNCTION HomeScreenSetup()
 {
 	integer i;
 
-	i = tech_home_present_fb + tech_home_ac_fb;
+	i = tech_home_present_fb + tech_home_ac_fb + tech_home_vc_fb;
 
 	if(i = 0)
 	{
@@ -688,14 +746,42 @@ FUNCTION HomeScreenSetup()
 			home_2_mode = _icon_home_blank;
 			home_3_mode = _icon_home_blank;
 		}
+		else if(tech_home_vc_fb)
+		{
+        	home_1_mode = _icon_home_vc;
+			home_2_mode = _icon_home_blank;
+			home_3_mode = _icon_home_blank;
+		}
 	}
 	else if(i = 2)
 	{
     	sub_home_even = 1;
 		sub_home_odd = 0;
 
-		home_1_mode = 1;
-		home_2_mode = 2;
+		if(tech_home_present_fb && tech_home_ac_fb)
+		{
+        	home_1_mode = _icon_home_present;
+			home_2_mode = _icon_home_ac;
+		}
+		else if(tech_home_present_fb && tech_home_vc_fb)
+		{
+        	home_1_mode = _icon_home_present;
+			home_2_mode = _icon_home_vc;
+		}
+		else if(tech_home_ac_fb && tech_home_vc_fb)
+		{
+        	home_1_mode = _icon_home_ac;
+			home_2_mode = _icon_home_vc;
+		}
+	}
+	else if(i = 3)
+	{
+    	sub_home_even = 0;
+		sub_home_odd = 1;
+
+		home_1_mode = _icon_home_present;
+		home_2_mode = _icon_home_ac;
+		home_3_mode = _icon_home_vc;
 	}
 }
 
@@ -776,6 +862,43 @@ RELEASE tech_home_ac
 	HomeScreenSetup();
 }
 
+PUSH tech_home_vc
+{
+	if(tech_home_vc_fb)
+	{
+		tech_vc_hold_flag = 1;
+		wait(65, tech_vc_wait1)
+		{
+			tech_vc_hold_flag = 0;
+       		//sub_tech_sources = 1;
+		}
+	}
+
+	if(! tech_home_vc_fb)
+	{
+		tech_home_vc_fb = 1;
+		wait(65, tech_vc_wait2)
+		{
+			//sub_tech_sources = 1;
+		}
+   	}
+
+	HomeScreenSetup();
+}
+
+RELEASE tech_home_vc
+{
+	if(tech_vc_hold_flag)
+	{
+		tech_home_vc_fb = 0;
+		tech_vc_hold_flag = 0;
+	}
+
+	cancelwait(tech_vc_wait1);
+	cancelwait(tech_vc_wait2);
+
+	HomeScreenSetup();
+}
 
 PUSH tech_settings_exit
 {
